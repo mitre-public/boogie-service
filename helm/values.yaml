@@ -1,0 +1,55 @@
+#
+# This file defines this chart's default configuration values, which can be overridden
+# By default, overrides for local testing should go in ./local.values.yaml
+# and general prod values in /deploy/cre-cre.values.yaml
+#
+# If you're deploying from a separate repo, most likely you will override values
+# there instead.
+#
+
+# metadata
+nameOverride: ""   # set if needed for some reason; otherwise see name in _helpers
+namespace: "auspicious-abyss"      # must override in another file (added by -f in the helm cli)
+partof: # add if this a component of a larger app
+  app: ""
+  component: "backend"
+
+service:
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  port:
+    name: http
+    number: 8080
+
+deployment:
+  image:
+    name: "local:boogie-service"
+    tag: ""
+  port: 8080  # should set with EXPOSE in Dockerfile
+
+  liveness: { }
+  readiness: { }
+
+  resources:
+    cpu: 500m
+    memory: 750Mi
+    cpuLimit: 1000m
+    memoryLimit: 1Gi
+    replicas: 1
+
+serviceAccount:
+  create: false
+  name: default
+
+ingress:
+  exposeMetrics: false
+configVolume:
+  name: config
+  mountPath: /config
+
+# Use this configuration to control what backing instance of a FileEventGenerator is configured
+# for a given deployment (e.g. fs-backed, s3-backed, etc.)
+fileEventGenerator: {}
+
+# Use this configuration to control which version of the boogie service implementation is used inside the service.
+boogieService: {}

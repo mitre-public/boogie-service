@@ -1,0 +1,15 @@
+*.jar
+*.class
+*.ipynb
+
+*.secret
+*.gitignore
+*.md
+bin/
+gradle/wrapper/
+ci-scripts/
+bamboo-specs/
+gradlew*
+sonar*
+./cache
+./image

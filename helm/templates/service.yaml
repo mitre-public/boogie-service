@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "boogie-service.fullname" . }}
+  namespace: {{ include "boogie-service.namespace" . }}
+  annotations:
+    {{- if .Values.service.annotations }}
+    {{- toYaml .Values.service.annotations | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "boogie-service.labels" . | nindent 4 }}
+    {{- if .Values.service.labels }}
+    {{- toYaml .Values.service.labels | nindent 4 }}
+    {{- end}}
+spec:
+  type: {{ .Values.service.type }}
+  sessionAffinity: {{ .Values.service.sessionAffinity }}
+  ports:
+    - port: {{ .Values.service.port.number }}
+      name: {{ .Values.service.port.name }}
+      targetPort: api-port
+      protocol: TCP
+    - port: 8081
+      name: http-metrics # ends with 'metrics' in case we want custom scraper to recognize
+      targetPort: liveness-port
+      protocol: TCP
+  selector:
+    {{- include "boogie-service.selectorLabels" . | nindent 4 }}

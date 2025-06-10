@@ -1,0 +1,79 @@
+[versions]
+aws-sdk = "2.30.8"
+guava = "31.0-jre"
+boogie = "4.6.8"
+commons = "0.0.59"
+springdoc = "2.0.2"
+findbugs = "3.0.2"
+slf4j = "2.23.1"
+equalsverifier = "3.16"
+
+[libraries]
+aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws-sdk" }
+aws-auth = { module = "software.amazon.awssdk:auth" }
+aws-sts = { module = "software.amazon.awssdk:sts" }
+
+aws-apache = { module = "software.amazon.awssdk:apache-client" }
+aws-netty = { module = "software.amazon.awssdk:netty-nio-client" }
+
+aws-iam = { module = "software.amazon.awssdk:iam" }
+aws-s3 = { module = "software.amazon.awssdk:s3" }
+
+boogie-arinc = { module = "org.mitre.boogie:boogie-arinc", version.ref = "boogie" }
+boogie-routes = { module = "org.mitre.boogie:boogie-routes", version.ref = "boogie" }
+boogie-core = { module = "org.mitre.boogie:boogie-core", version.ref = "boogie" }
+boogie-util = { module = "org.mitre.boogie:boogie-util", version.ref = "boogie" }
+
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+commons = { module = "org.mitre:commons", version.ref = "commons" }
+springdoc-openapi-webflux-ui = { module = "org.springdoc:springdoc-openapi-starter-webflux-ui", version.ref = "springdoc" }
+jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "findbugs" }
+log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "slf4j" }
+log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "slf4j" }
+equalsverifier = { module = "nl.jqno.equalsverifier:equalsverifier", version.ref = "equalsverifier" }
+
+spring-boot-starter-log4j2 = { module = "org.springframework.boot:spring-boot-starter-log4j2" }
+spring-boot-starter-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
+
+[bundles]
+aws = [
+    "aws-auth",
+    "aws-sts",
+    "aws-apache",
+    "aws-netty",
+    "aws-iam",
+    "aws-s3"
+]
+tdp = [
+    "boogie-core",
+    "boogie-arinc",
+    "boogie-routes",
+    "boogie-util"
+]
+logging = [
+    "spring-boot-starter-log4j2",
+    "log4j-api",
+    "log4j-slf4j2-impl"
+]
+spring = [
+    "spring-boot-starter-webflux",
+    "spring-boot-starter-actuator"
+]
+documentation = [
+    "springdoc-openapi-webflux-ui"
+]
+testing = [
+    "spring-boot-starter-test",
+    "equalsverifier"
+]
+utilities = [
+    "guava",
+    "jsr305",
+    "commons"
+]
+monitoring = [
+    "micrometer-registry-prometheus"
+]

@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: Boogie Service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  output:
+    ansi:
+      enabled: ALWAYS
+server:
+  shutdown: graceful
+  forward-headers-strategy: framework
+springdoc:
+  swagger-ui:
+    path: /
+    enabled: true
+management:
+  server:
+    port: 8081
+  endpoint:
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+logging:
+  level: 
+    root: info
+    org:
+      springframework:
+        web: 
+          filter: 
+            CommonsRequestLoggingFilter: INFO

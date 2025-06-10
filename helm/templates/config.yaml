@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "boogie-service.configMapName" . }}
+  namespace: {{ include "boogie-service.namespace" . }}
+  labels:
+    {{- include "boogie-service.labels" . | nindent 4 }}
+data:
+  application.yaml: |
+    {{- if .Values.fileEventGenerator }}
+    fileEventGenerator:
+      {{- .Values.fileEventGenerator | toYaml | nindent 6 }}
+    {{- end }}
+    {{- if .Values.boogieService }}
+    boogieService:
+      {{- .Values.boogieService | toYaml | nindent 6 }}
+    {{- end }}

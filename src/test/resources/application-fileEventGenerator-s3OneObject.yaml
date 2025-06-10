@@ -1,0 +1,10 @@
+fileEventGenerator:
+  s3:
+    credentials:
+      provider: 'BASIC'
+      accessKey: 'fake'
+      secretKey: 'fake'
+    region: 'us-gov-west-1'
+    oneObject:
+      bucket: "nautical-nonsense.cifp"
+      name: "1906.gz"

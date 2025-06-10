@@ -1,0 +1,4 @@
+fileEventGenerator:
+  fs:
+    oneFile:
+      name: "src/test/resources/routeExpansionService/kjfk-and-friends.txt"

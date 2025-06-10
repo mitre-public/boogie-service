@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "boogie-service.fullname" . }}
+  namespace: {{ include "boogie-service.namespace" . }}
+  labels:
+    {{- include "boogie-service.labels" . | nindent 4 }}
+spec:
+  # We set revisionHistoryLimit to 0 because rollback should be done
+  # using `helm rollback` rather than with `kubectl rollout undo`, so
+  # we don't need to keep the old `ReplicaSet`s around.
+  # https://kubernetes.io/docs/concepts/workloads/controllers/deployment
+  revisionHistoryLimit: 0
+  replicas: {{ .Values.deployment.resources.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "boogie-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "boogie-service.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+        {{- if .Values.deployment.annotations }}
+        {{- toYaml .Values.deployment.annotations | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+
+          image: "{{ .Values.deployment.image.name }}:{{ .Values.deployment.image.tag | default .Chart.Version }}"
+          {{- if .Values.imagePullPolicy }}
+          imagePullPolicy: {{.Values.imagePullPolicy}} # defaults are good actually
+          {{- end }}
+
+          # hardcode the listening port if Dockerfile isn't set with EXPOSE
+          ports:
+            - name: api-port
+              containerPort: {{.Values.deployment.port}}
+              protocol: TCP
+            - name: liveness-port
+              containerPort: 8081
+
+          # We recommend always providing these endpoints.
+          # See
+          # - Spring docs: https://docs.spring.io/spring-boot/docs/2.3.0.RELEASE/reference/html/production-ready-features.html#production-ready-kubernetes-probes
+          # TODO: links etc; add to docs
+          {{- if .Values.deployment.readiness }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.deployment.readiness.initialDelaySeconds }}
+            httpGet:
+              path: /actuator/health/readiness
+              port: liveness-port
+          {{- end }}
+          {{- if .Values.deployment.liveness }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.deployment.liveness.initialDelaySeconds }}
+            httpGet:
+              path: /actuator/health/liveness
+              port: liveness-port
+          {{- end }}
+
+          # see https://docs.spring.io/spring-boot/docs/2.3.0.RELEASE/reference/html/deployment.html#cloud-deployment-kubernetes-container-lifecycle
+          lifecycle:
+            preStop:
+              exec:
+                command: [ "sh", "-c", "sleep 10" ]
+
+          # container resources
+          # if limits = requests then QoS is set to "Guaranteed"
+          resources:
+            limits:
+              memory: {{.Values.deployment.resources.memoryLimit}}     # If container uses over limit it is killed (OOM)
+              cpu: {{.Values.deployment.resources.cpuLimit}}           # If container uses over limit (vCPU) it is throttled
+            requests:
+              memory: {{.Values.deployment.resources.memory}}          # Scheduler finds a node where amt is available
+              cpu: {{.Values.deployment.resources.cpu}}                # Scheduler finds a node where amt (vCPU) is available
+
+          # per-container security context
+          # lock down privileges inside the container
+          securityContext:
+            allowPrivilegeEscalation: false # prevent sudo, etc.
+            privileged: false               # prevent acting like host root
+            readOnlyRootFilesystem: true    # keep true whenever possible. For spring we mount /tmp differently see https://github.com/spring-projects/spring-boot/issues/8578
+            capabilities:
+              drop:                         # https://avd.aquasec.com/misconfig/ksv003
+                - ALL
+          env:
+            - name: SPRING_CONFIG_LOCATION
+              value: 'classpath:/application.yaml,file:/config/application.yaml'
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp-dir
+              readOnly: false
+            - name: {{ .Values.configVolume.name }}
+              mountPath: '{{ .Values.configVolume.mountPath }}'
+              readOnly: true
+
+      volumes:
+        - name: tmp-dir
+          emptyDir: { }
+        - name: {{ .Values.configVolume.name }}
+          configMap:
+            name: {{ include "boogie-service.configMapName" . }}
+            items:
+              - key: application.yaml
+                path: application.yaml
+
+      terminationGracePeriodSeconds: 600 # default is 30, but you may need more time to gracefully shutdown (HTTP long polling, user uploads, etc)
+
+      # per-pod security context
+      # enable seccomp and force non-root user
+      securityContext:
+
+        seccompProfile:
+          type: RuntimeDefault   # enable seccomp and the runtimes default profile
+
+        runAsUser: 10000         # hardcode user to non-root if not set in Dockerfile
+        runAsGroup: 10001        # hardcode group to non-root if not set in Dockerfile
+        runAsNonRoot: true       # hardcode to non-root. Redundant to above if Dockerfile is set USER 1000

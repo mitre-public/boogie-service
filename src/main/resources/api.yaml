@@ -1,0 +1,709 @@
+openapi: 3.0.0
+info:
+  title: Boogie
+  version: 0.11.0
+  description: Exposes data from Boogie via REST API.
+
+servers:
+  - url: '/'
+
+tags:
+  - name: Expand
+    description: Expand provided route(s) into 2D paths.
+  - name: Lookup
+    description: Fetch data
+
+paths:
+
+  /v1/expand/routes:
+    post:
+      tags:
+        - Expand
+      summary: Expand a collection of routes.
+      operationId: expand
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteSet'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteResults'
+  
+  /v1/airport:
+    get:
+      tags:
+        - Lookup
+      summary: Find single airport information by airportIdentifier
+      operationId: airportLookup
+      parameters:
+        - in: query
+          name: code
+          schema:
+            type: string
+          required: true
+          description: ICAO airport code to search for
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Airport'
+        '404':
+          description: Airport not found
+
+  /v1/airport/geojson:
+    get:
+      tags:
+        - Lookup
+      summary: Find single airport information by airportIdentifier, geojson return structure
+      operationId: airportLookupGeoJson
+      parameters:
+        - in: query
+          name: code
+          schema:
+            type: string
+          required: true
+          description: ICAO airport code to search for
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+        '404':
+          description: Airport not found
+
+  /v1/airports:
+    get:
+      tags:
+        - Lookup
+      summary: Find airport information by airportIdentifier
+      description: A simplified airport
+      operationId: airportsLookup
+      parameters:
+        - in: query
+          name: codes
+          schema:
+            type: string
+          required: true
+          description: comma-delimited list of ICAO airport codes.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Airport'
+        '404':
+          description: Airport not found
+
+  /v1/airports/geojson:
+    get:
+      tags:
+        - Lookup
+      summary: Find airport information by airportIdentifier
+      description: a simplified airport
+      operationId: airportsLookupGeoJson
+      parameters:
+        - in: query
+          name: codes
+          schema:
+            type: string
+          required: true
+          description: comma-delimited list of ICAO airport codes.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureCollection'
+        '404':
+          description: Airport information not found
+
+  /v1/airspace/fir:
+    get:
+      tags:
+        - Lookup
+      summary: Find a single fir by identifier
+      operationId: firLookup
+      parameters:
+        - in: query
+          name: identifier
+          schema:
+            type: string
+          required: true
+          description: The name of the airspace then hyphen then the address of the airspace
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Airspace'
+        '404':
+          description: FIR was not found
+  /v1/airspace/fir/geojson:
+    get:
+      tags:
+        - Lookup
+      summary: Find a single fir by identifier
+      description: a simplified FIR
+      operationId: firLookupGeoJson
+      parameters:
+        - in: query
+          name: identifier
+          schema:
+            type: string
+          required: true
+          description: The name of the airspace then hyphen then the address of the airspace.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Polygon'
+        '404':
+          description: FIR information not found
+  /v1/airspace/uir:
+    get:
+      tags:
+        - Lookup
+      summary: Find a single uir by identifier
+      operationId: uirLookup
+      parameters:
+        - in: query
+          name: identifier
+          schema:
+            type: string
+          required: true
+          description: The name of the airspace then hyphen then the address of the airspace
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Airspace'
+        '404':
+          description: UIR was not found
+
+  /v1/airspace/uir/geojson:
+    get:
+      tags:
+        - Lookup
+      summary: Find a single UIR by identifier
+      description: a simplified UIR
+      operationId: uirLookupGeoJson
+      parameters:
+        - in: query
+          name: identifier
+          schema:
+            type: string
+          required: true
+          description: The name of the airspace then hyphen then the address of the airspace.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Polygon'
+        '404':
+          description: FIR information not found
+
+  /v1/airspace/firuir/identifiers:
+    get:
+      tags:
+        - Lookup
+      summary: Get all FIR/UIR identifiers by ARINC 424 Area Code
+      description: identifiers for all the FIR/UIR in an area
+      operationId: firUirIdentifierLookup
+      parameters:
+        - in: query
+          name: areaCode
+          schema:
+            type: string
+          required: true
+          description: One of the ARINC 424 area codes
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AirspaceIdentifier'
+        '404':
+          description: FIR information not found !!YOUR ARINC-FILE MIGHT NOT HAVE ANY!!
+
+components:
+  schemas:
+    Feature:
+      description: GeoJson 'Feature' object
+      type: object
+      required:
+        - geometry
+        - properties
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - Feature
+        geometry:
+          $ref: '#/components/schemas/Point'
+        properties:
+          type: object
+          nullable: true
+        id:
+          type: string
+
+    FeatureCollection:
+      type: object
+      required:
+        - features
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - FeatureCollection
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
+
+    GeometryType:
+      description: >
+        Enum containing the various options for Geometry Types
+      type: string
+      enum:
+        - Point
+        - MultiPoint
+        - LineString
+        - MultiLineString
+        - Polygon
+        - MultiPolygon
+
+    Point:
+      type: object
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum:
+            - Point
+        coordinates:
+          $ref: '#/components/schemas/Position'
+    
+    Polygon:
+      type: object
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum:
+            - Polygon
+        coordinates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+
+    Position:
+      type: array
+      minItems: 2
+      maxItems: 3
+      items:
+        type: number
+
+    Airport:
+      type: object
+      required:
+        - airportIdentifier
+        - latitude
+        - longitude
+        - runways
+      properties:
+        airportIdentifier:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        magneticVariation:
+          type: number
+          description: The magnetic variation in degrees.
+        runways:
+          type: array
+          items:
+            $ref: '#/components/schemas/Runway'
+    Runway:
+      type: object
+      required:
+        - runwayIdentifier
+        - latitude
+        - longitude
+      properties:
+        runwayIdentifier:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        length:
+          type: number
+        course:
+          type: number
+
+    RouteSet:
+      type: object
+      properties:
+        routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/RouteToExpand'
+    RouteToExpand:
+      type: object
+      required:
+        - route
+      properties:
+        route:
+          type: string
+        departureRunway:
+          type: string
+          description: >-
+            If provided and the SID contains a runway transition for the departure runway the expansion will include it.
+        arrivalRunway:
+          type: string
+          description: >-
+            If provided and the STAR contains a runway transition for the arrival runway the expansion will include it.
+        equipagePreference:
+          type: array
+          description: >-
+            If provided (alongside an arrival runway) an approach for the arrival runway with the specified equipage will be 
+            included in the expansion. Leaving this field empty or supplying and empty list will result in no approach being 
+            included.
+          items:
+            $ref: '#/components/schemas/Equipage'
+    Equipage:
+      type: string
+      enum:
+        - RNP
+        - RNAV
+        - CONV
+
+    RouteResults:
+      type: object
+      description: >-
+        The results object will contain an entry for every provided RouteToExpand in the input RouteSet, though not all entries 
+        will necessarily have a successful expansion result in them (some may fail).
+      required:
+        - routeResult
+      properties:
+        routeResult:
+          type: array
+          items:
+            $ref: '#/components/schemas/RouteResult'
+    RouteResult:
+      type: object
+      description: >-
+        Represents the result of a single RouteToExpand request, it may or may not contain an ExpandedRoute depending on whether 
+        the expansion was successful.
+      required:
+        - routeToExpand
+      properties:
+        routeToExpand:
+          $ref: '#/components/schemas/RouteToExpand'
+        expandedRoute:
+          $ref: '#/components/schemas/ExpandedRoute'
+    ExpandedRoute:
+      type: object
+      required:
+        - legs
+      properties:
+        routeSummary:
+          $ref: '#/components/schemas/RouteSummary'
+        legs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpandedRouteLeg'
+    RouteSummary:
+      type: object
+      description: >-
+        Summarization of the results of the route expansion as a collection of meaningful high-level concepts.
+      required:
+        - route
+      properties:
+        route:
+          type: string
+        departureAirport:
+          type: string
+          description: The departure airport, if filed in the route.
+        departureRunway:
+          type: string
+          description: The departure runway, if provided as context and used in the expansion.
+        departureFix:
+          type: string
+          description: The departure fix as extracted from the filed SID.
+        sid:
+          type: string
+        sidExitFix:
+          type: string
+        requiredSidEquipage:
+          $ref: '#/components/schemas/Equipage'
+        arrivalAirport:
+          type: string
+          description: The arrival airport, if filed in the route.
+        arrivalRunway:
+          type: string
+          description: The arrival runway, if provided as context and used in the expansion.
+        arrivalFix:
+          type: string
+          description: The arrival fix as extracted from the filed STAR.
+        star:
+          type: string
+        starEntryFix:
+          type: string
+        requiredStarEquipage:
+          $ref: '#/components/schemas/Equipage'
+        approach:
+          type: string
+          description: The inferred approach procedure if a runway and requested equipage were provided.
+        approachEntryFix:
+          type: string
+        requiredApproachEquipage:
+          $ref: '#/components/schemas/Equipage'
+    ExpandedRouteLeg:
+      type: object
+      description: Leg of the expanded route decorated with metadata from the route string.
+      required:
+        - section
+        - elementType
+        - leg
+      properties:
+        section:
+          type: string
+          description: The token from the route string which was used to generate this leg.
+        elementType:
+          type: string
+          description: The type of element the section represents in the expansion.
+        wildcards:
+          type: string
+          description: Additional information decorating the route token which was filed as part of the route string.
+        leg:
+          $ref: '#/components/schemas/RouteLeg'
+    RouteLeg:
+      type: object
+      required:
+        - pathTerminator
+        - sequenceNumber
+        - isFlyOverFix
+        - isPublishedHoldingFix
+      properties:
+        associatedFix:
+          $ref: '#/components/schemas/RouteFix'
+        recommendedNavaid:
+          $ref: '#/components/schemas/RouteFix'
+        centerFix:
+          $ref: '#/components/schemas/RouteFix'
+        pathTerminator:
+          $ref: '#/components/schemas/PathTerminator'
+        sequenceNumber:
+          type: integer
+        outboundMagneticCourse:
+          type: number
+        rho:
+          type: number
+        theta:
+          type: number
+        rnp:
+          type: number
+        routeDistance:
+          type: number
+          description: The distance to fly along the path defined by the leg in NM.
+        holdTime:
+          type: integer
+          description: How long the aircraft should expect to hold in minutes.
+        verticalAngle:
+          type: number
+        speedConstraint:
+          $ref: '#/components/schemas/RouteConstraint'
+        altitudeConstraint:
+          $ref: '#/components/schemas/RouteConstraint'
+        turnDirection:
+          $ref: '#/components/schemas/TurnDirection'
+        isFlyOverFix:
+          type: boolean
+        isPublishedHoldingFix:
+          type: boolean
+    RouteFix:
+      type: object
+      required:
+        - fixIdentifier
+        - latitude
+        - longitude
+      properties:
+        fixIdentifier:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        magneticVariation:
+          type: number
+          description: The magnetic variation in degrees.
+    PathTerminator:
+      type: string
+      enum:
+        - IF
+        - TF
+        - CF
+        - DF
+        - FA
+        - FC
+        - FD
+        - FM
+        - CA
+        - CD
+        - CI
+        - CR
+        - RF
+        - AF
+        - VA
+        - VD
+        - VI
+        - VM
+        - VR
+        - PI
+        - HA
+        - HF
+        - HM
+    RouteConstraint:
+      type: object
+      description: Describes a range restriction (potentially unbounded above/below) on a route.
+      properties:
+        min:
+          type: number
+        max:
+          type: number
+    TurnDirection:
+      type: string
+      enum:
+        - LEFT
+        - RIGHT
+        - BOTH
+    Airspace:
+      type: object
+      required:
+        - area
+        - identifier
+        - airspaceType
+        - sequences
+      properties:
+        area:
+          description: The ARINC 424 area code for this data item
+          type: string
+        identifier:
+          description: The name of the airspace then hyphen then the address of the airspace
+          type: string
+        airspaceType:
+          $ref: '#/components/schemas/AirspaceType'
+        sequences:
+          type: array
+          items:
+            $ref: '#/components/schemas/AirspaceSequence'
+        center:
+          $ref: '#/components/schemas/RouteFix'
+        altitudeLimit:
+          $ref: '#/components/schemas/AltitudeLimit'
+    AltitudeLimit:
+      type: object
+      properties:
+        min:
+          description: the possibly nullable minimum alt of this airspace in feet
+          type: number
+        max:
+          description: the possibly nullable top of this airspace in feet
+          type: number
+    AirspaceType:
+      type: string
+      enum:
+        - FIR
+        - UIR
+        - CONTROLLED
+        - RESTRICTIVE
+    AirspaceSequence:
+      type: object
+      description: This is an individual segment of an airspace
+      required:
+        - geometry
+        - sequenceNumber
+      properties:
+        associatedFix:
+          $ref: '#/components/schemas/LatLong'
+        centerFix:
+          $ref: '#/components/schemas/LatLong'
+        arcRadius:
+          type: number
+          description: If the geometry has an arc this is its radius in nm
+        arcBearing:
+          type: number
+          description: If the geometry has an arc this is the bearing from the origin to the start of the arc
+        geometry:
+          $ref: '#/components/schemas/Geometry'
+        sequenceNumber:
+          type: number
+          description: Sort the legs on these to get the sequences in order.
+    Geometry:
+      type: string
+      enum:
+        - CIRCLE
+        - GREAT_CIRCLE
+        - RHUMB_LINE
+        - COUNTER_CLOCKWISE_ARC
+        - CLOCKWISE_ARC
+    LatLong:
+      type: object
+      description: A simple two dimensional point in space
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+
+    AirspaceIdentifier:
+      type: object
+      required:
+        - name
+        - address
+        - airspaceType
+      description: The name and address of the airspace
+      properties:
+        name:
+          type: string
+          description: The FIR/UIR Identifier field identifies the Flight Information Region and Upper Information Region of airspace with defined dimensions within which Flight Information Service and Alerting Service are provided. The Identifier is for the controlling Area Control Center or Flight Information Center.
+        address:
+          type: string
+          description: The FIR/UIR Address field contains the four-character communications address of the FIR/UIR to supplement the FIR/UIR Ident.
+        airspaceType:
+          $ref: '#/components/schemas/AirspaceType'

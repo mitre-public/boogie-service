@@ -1,0 +1,9 @@
+# This yaml file should create a working version of the service locally via:
+# ./gradlew bootRun --args='--spring.profiles.active=local-file'
+fileEventGenerator:
+  fs:
+    oneFile:
+      name: "src/test/resources/routeExpansionService/kjfk-and-friends.txt"
+boogieService:
+  boogie:
+    enabled: true
