@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: version
+        uses: ietf-tools/semver-action@v1.9.0
+        with:
+          token: ${{ github.token }}
+          branch: main
+          majorList: feat!
+          minorList: feat
+          patchList: fix
+          noVersionBumpBehavior: patch
+          noNewCommitBehavior: silent
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Boogie Service Jar
+        run: ./gradlew openApiGenerate bootJar -x test -PghprToken=${{ github.GITHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io/mitre-public/boogie-service
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: azure/setup-helm@v4.3.0
+      - name: Publish boogie service Helm Chart
+        run: |
+          helm package helm --version ${{ steps.version.outputs.nextStrict }}
+          helm push boogie-service-${{ steps.version.outputs.nextStrict }}.tgz oci://ghcr.io/mitre-public/boogie-service/charts
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/mitre-public/boogie-service
+          tags: ${{ steps.version.outputs.nextStrict }}
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.nextStrict }}" --target "${{ github.sha }}" --title "${{steps.version.outputs.nextStrict}}"
+
+      - name: Tag Release
+        env:
+          TAG: ${{ steps.version.outputs.nextStrict }}
+        run: |
+          git tag ${TAG} ${GITHUB_SHA}
+          git push origin ${TAG}
