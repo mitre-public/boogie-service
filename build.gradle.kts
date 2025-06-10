@@ -77,6 +77,10 @@ tasks.withType<org.openapitools.generator.gradle.plugin.tasks.GenerateTask> {
     configOptions.put("apiPackage", "org.mitre.caasd.app.controllers")
 }
 
+tasks.compileJava {
+    dependsOn(tasks.named("openApiGenerate"))
+}
+
 application {
     mainClass.set("org.mitre.tdp.boogie.Main")
 }

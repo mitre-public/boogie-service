@@ -1,9 +1,4 @@
-FROM harbor-cre-ops.cre.gov.aws.mitre.org/aws-ecr/docker-init:latest-mitre AS docker-init
-
 FROM eclipse-temurin:21-jre-alpine AS deploy
-
-RUN --mount=type=bind,src=/caasd,from=docker-init,dst=/init \
-    /init/scripts/copy-certs.sh --setup=java
 
 WORKDIR /boogie-service
 
