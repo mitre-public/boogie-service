@@ -19,13 +19,13 @@ fun Project.applyPublishing(componentName: String) {
                 pom {
                     name.set(project.name)
                     organization {
-                        name.set("The MITRE Corporation TDP")
-                        url.set("https://github.com/mitre-tdp")
+                        name.set("The MITRE Corporation")
+                        url.set("https://github.com/mitre-public")
                     }
                     scm {
-                        connection.set("scm:git:ssh://git@github.com:mitre-tdp/boogie-service.git")
-                        developerConnection.set("scm:git:ssh://git@github.com:mitre-tdp/boogie-service.git")
-                        url.set("https://github.com/mitre-tdp/boogie-service")
+                        connection.set("scm:git:ssh://git@github.com:mitre-public/boogie-service.git")
+                        developerConnection.set("scm:git:ssh://git@github.com:mitre-public/boogie-service.git")
+                        url.set("https://github.com/mitre-public/boogie-service")
                         tag.set("HEAD")
                     }
                 }
@@ -36,7 +36,7 @@ fun Project.applyPublishing(componentName: String) {
         repositories {
             maven {
                 name = "boogie-service"
-                url = uri("https://maven.pkg.github.com/mitre-tdp/boogie-service")
+                url = uri("https://maven.pkg.github.com/mitre-public/boogie-service")
                 credentials(HttpHeaderCredentials::class) {
                     name = "Authorization"
                     value = "Bearer ${ghprToken ?: System.getenv("ghprToken")}"
