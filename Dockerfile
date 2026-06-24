@@ -14,10 +14,15 @@
 #   shipped only the public temurin truststore. The cert stage below ADDS the MITRE roots (matching
 #   the maestro pattern). This is a net improvement and is required for any outbound TLS to
 #   MITRE-internal endpoints; it does not regress prior behavior for public endpoints.
-ARG TEMURIN_JDK_VERSION=21-jdk-alpine3.24-dev
-ARG TEMURIN_JDK_DIGEST=sha256:b60eaaef4af660b6b9476c612b77e3c8c998a166869797f53f444c7a5cc14f82
+ARG TEMURIN_JDK_VERSION=21-jdk-alpine-dev
+ARG TEMURIN_JDK_DIGEST=sha256:1c1f852eb32137cc82ea3f0a64ac5e3e733718325dbe17bf2ce2c58ab0ac848d
 
-ARG BUILD_INIT=harbor.cre.gov.aws.mitre.org/cre/docker-init:20260429.1415.47-adc03cd-mitre
+# docker-init is a FROM-scratch, data-only image (certs + scripts) used solely as a build-time
+# bind-mount source; its layers never ship in the runtime, so it has no runtime CVE impact. Track
+# the maintained moving tag rather than a pinned build — stale pinned builds get retention-purged
+# and break the build later. BUILD_INIT stays an ARG so a deployment can swap the per-environment
+# cert payload (mitre / gha / faa-tyrion / partner).
+ARG BUILD_INIT=harbor.cre.gov.aws.mitre.org/cre/docker-init:latest-mitre
 FROM $BUILD_INIT AS docker-init
 
 # ---- cert stage: bake the MITRE CA roots into a temurin truststore --------------------------------
