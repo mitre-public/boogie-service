@@ -99,8 +99,13 @@ spec:
             - name: SPRING_CONFIG_LOCATION
               value: 'classpath:/application.yaml,file:/config/application.yaml'
           volumeMounts:
+            # readOnlyRootFilesystem is true (above); the DHI distroless runtime still needs a
+            # writable /tmp (JVM java.io.tmpdir) and /run, so back both with emptyDir mounts.
             - mountPath: /tmp
               name: tmp-dir
+              readOnly: false
+            - mountPath: /run
+              name: run-dir
               readOnly: false
             - name: {{ .Values.configVolume.name }}
               mountPath: '{{ .Values.configVolume.mountPath }}'
@@ -108,6 +113,8 @@ spec:
 
       volumes:
         - name: tmp-dir
+          emptyDir: { }
+        - name: run-dir
           emptyDir: { }
         - name: {{ .Values.configVolume.name }}
           configMap:
