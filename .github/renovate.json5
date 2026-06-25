@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "enabledManagers": [
+    "github-actions",
+    "gradle",
+    "gradle-wrapper",
+    "dockerfile",
+    "docker-compose"
+  ],
+  "extends": [
+    "github>cre-security/renovate-controller",
+    "github>mitre-tdp/tdp-renovate:gradle.json5",
+    "github>mitre-tdp/tdp-renovate:docker.json5",
+    "github>mitre-tdp/tdp-renovate:github-actions.json5"
+  ],
+  "packageRules": [
+    {
+      // docker-init: moving cert payload (:latest-mitre) — keep floating, never pin its digest
+      "matchPackageNames": ["harbor.cre.gov.aws.mitre.org/cre/docker-init"],
+      "pinDigests": false,
+    },
+  ]
+}
